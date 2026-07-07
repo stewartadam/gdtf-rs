@@ -1,7 +1,7 @@
 //! Defines the type and dimensions of models.
 
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, Name};
+use crate::values::{Name, non_empty_string};
 use crate::{Model2View, Model3Detail, Model3Format, ResourceMap};
 use serde::{Deserialize, Serialize};
 

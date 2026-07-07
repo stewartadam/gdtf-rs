@@ -3,7 +3,7 @@
 use crate::description::parse_helper::Parse;
 use crate::description::util::IterUtil;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, ColorCie, Name};
+use crate::values::{ColorCie, Name, non_empty_string};
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};

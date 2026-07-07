@@ -10,7 +10,7 @@ use crate::physical_descriptions::PhysicalDescriptions;
 use crate::protocol::Protocols;
 use crate::revision::Revision;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, ok_or_default, Name};
+use crate::values::{Name, non_empty_string, ok_or_default};
 use crate::wheel::Wheel;
 use crate::{FtThumbnailFormat, ResourceMap};
 use serde::de::{Error, Unexpected, Visitor};

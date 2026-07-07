@@ -6,7 +6,7 @@ use crate::fixture_type::FixtureType;
 use crate::geometry::Geometry;
 use crate::physical_descriptions::{ColorSpace, DmxProfile, Emitter, Filter, Gamut};
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, DmxValue, Name, Node, NodeExt};
+use crate::values::{DmxValue, Name, Node, NodeExt, non_empty_string};
 use crate::wheel::{Wheel, WheelSlot};
 use serde::de::value::StrDeserializer;
 use serde::de::{Error, Unexpected, Visitor};

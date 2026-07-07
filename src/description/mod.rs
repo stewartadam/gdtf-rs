@@ -73,7 +73,8 @@ impl Description {
     where
         W: Write,
     {
-        Ok(quick_xml::se::to_writer(writer, self)?)
+        quick_xml::se::to_writer(writer, self)?;
+        Ok(())
     }
 
     /// Serializes as XML data into a `String`.

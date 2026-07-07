@@ -1,9 +1,9 @@
 use crate::{GdtfError, GdtfResult};
 use std::fmt::{Debug, Formatter};
 use std::io::{Read, Seek};
+use zip::ZipArchive;
 use zip::read::ZipFile;
 use zip::result::{ZipError, ZipResult};
-use zip::ZipArchive;
 
 /// Provides resource files contained in a GDTF file.
 ///
@@ -32,7 +32,7 @@ impl ResourceMap {
     /// Opens a resource file contained in the GDTF file for reading.
     pub fn read_resource(&mut self, path: &str) -> GdtfResult<Resource<'_>> {
         match self.archive.by_name(path) {
-            Ok(file) => Ok(Resource::new(file)),
+            Ok(resource) => Ok(resource),
             Err(ZipError::FileNotFound) => Err(GdtfError::ResourceNotFound),
             Err(err) => Err(err.into()),
         }
@@ -141,15 +141,15 @@ impl Debug for ResourceMap {
 }
 
 pub(crate) trait AnyZipArchive: 'static {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>>;
+    fn by_name(&mut self, path: &str) -> ZipResult<Resource<'_>>;
 }
 
 impl<R> AnyZipArchive for ZipArchive<R>
 where
     R: Read + Seek + 'static,
 {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>> {
-        self.by_name(path)
+    fn by_name(&mut self, path: &str) -> ZipResult<Resource<'_>> {
+        self.by_name(path).map(Resource::new)
     }
 }
 
@@ -158,24 +158,36 @@ where
 /// Resources contain binary data which is exposed as a stream through the [Read] trait. How to
 /// interpret the data depends on the type of resource.
 pub struct Resource<'a> {
-    archive_file: ZipFile<'a>,
+    archive_file: Box<dyn Read + 'a>,
+    name: String,
+    size: u64,
 }
 
 impl<'a> Resource<'a> {
-    pub(crate) fn new(archive_file: ZipFile<'a>) -> Self {
-        Resource { archive_file }
+    pub(crate) fn new<R>(archive_file: ZipFile<'a, R>) -> Self
+    where
+        R: Read + 'a,
+    {
+        let name = archive_file.name().to_owned();
+        let size = archive_file.size();
+
+        Resource {
+            archive_file: Box::new(archive_file),
+            name,
+            size,
+        }
     }
 
     /// Returns the size of the resource file in bytes.
     pub fn size(&self) -> u64 {
-        self.archive_file.size()
+        self.size
     }
 }
 
 impl<'a> Debug for Resource<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Resource")
-            .field("archive_file", &self.archive_file.name())
+            .field("archive_file", &self.name)
             .finish()
     }
 }
