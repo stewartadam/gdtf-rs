@@ -158,9 +158,7 @@ where
 /// Resources contain binary data which is exposed as a stream through the [Read] trait. How to
 /// interpret the data depends on the type of resource.
 pub struct Resource<'a> {
-    archive_file: Box<dyn Read + 'a>,
-    name: String,
-    size: u64,
+    archive_file: Box<dyn AnyZipFile + 'a>,
 }
 
 impl<'a> Resource<'a> {
@@ -168,26 +166,21 @@ impl<'a> Resource<'a> {
     where
         R: Read + 'a,
     {
-        let name = archive_file.name().to_owned();
-        let size = archive_file.size();
-
         Resource {
             archive_file: Box::new(archive_file),
-            name,
-            size,
         }
     }
 
     /// Returns the size of the resource file in bytes.
     pub fn size(&self) -> u64 {
-        self.size
+        self.archive_file.size()
     }
 }
 
 impl<'a> Debug for Resource<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Resource")
-            .field("archive_file", &self.name)
+            .field("archive_file", &self.archive_file.name())
             .finish()
     }
 }
@@ -207,6 +200,21 @@ impl<'a> Read for Resource<'a> {
 
     fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<()> {
         self.archive_file.read_exact(buf)
+    }
+}
+
+trait AnyZipFile: Read {
+    fn name(&self) -> &str;
+    fn size(&self) -> u64;
+}
+
+impl<R> AnyZipFile for ZipFile<'_, R> where R: Read + ?Sized {
+    fn name(&self) -> &str {
+        self.name()
+    }
+
+    fn size(&self) -> u64 {
+        self.size()
     }
 }
 
