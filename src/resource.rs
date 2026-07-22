@@ -30,7 +30,7 @@ impl ResourceMap {
     }
 
     /// Opens a resource file contained in the GDTF file for reading.
-    pub fn read_resource(&mut self, path: &str) -> GdtfResult<Resource> {
+    pub fn read_resource(&mut self, path: &str) -> GdtfResult<Resource<'_>> {
         match self.archive.by_name(path) {
             Ok(file) => Ok(Resource::new(file)),
             Err(ZipError::FileNotFound) => Err(GdtfError::ResourceNotFound),
@@ -50,7 +50,7 @@ impl ResourceMap {
         &mut self,
         name: &str,
         format: FtThumbnailFormat,
-    ) -> GdtfResult<Resource> {
+    ) -> GdtfResult<Resource<'_>> {
         self.read_resource(&format!("{name}.{}", format.extension()))
     }
 
@@ -63,7 +63,7 @@ impl ResourceMap {
     ///  - Maximum resolution of picture: 1024x1024
     ///  - Recommended resolution of gobo: 256x256
     ///  - Recommended resolution of animation wheel: 256x256
-    pub fn read_wheel_media(&mut self, name: &str) -> GdtfResult<Resource> {
+    pub fn read_wheel_media(&mut self, name: &str) -> GdtfResult<Resource<'_>> {
         self.read_resource(&format!("wheels/{name}.png"))
     }
 
@@ -89,7 +89,7 @@ impl ResourceMap {
     ///  - Align the viewbox to the top left of the device.
     ///
     /// To read 3D (3DS or GLB) model files, see [read_model_mesh](Self::read_model_mesh).
-    pub fn read_model_symbol(&mut self, name: &str, view: Model2View) -> GdtfResult<Resource> {
+    pub fn read_model_symbol(&mut self, name: &str, view: Model2View) -> GdtfResult<Resource<'_>> {
         self.read_resource(&format!("models/{}/{name}.svg", view.folder()))
     }
 
@@ -124,7 +124,7 @@ impl ResourceMap {
         name: &str,
         format: Model3Format,
         detail: Model3Detail,
-    ) -> GdtfResult<Resource> {
+    ) -> GdtfResult<Resource<'_>> {
         self.read_resource(&format!(
             "models/{}{}/{name}.{}",
             format.folder(),
@@ -141,14 +141,14 @@ impl Debug for ResourceMap {
 }
 
 pub(crate) trait AnyZipArchive: 'static {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile>;
+    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>>;
 }
 
 impl<R> AnyZipArchive for ZipArchive<R>
 where
     R: Read + Seek + 'static,
 {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile> {
+    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>> {
         self.by_name(path)
     }
 }

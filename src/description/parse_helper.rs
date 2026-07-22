@@ -6,7 +6,7 @@
 //! a value that implements FromStr.
 //!
 //! For example the following enum:
-//! ```no_run
+//! ```ignore
 //! use serde::Deserialize;
 //!
 //! #[derive(Deserialize)]
@@ -21,7 +21,7 @@
 //! ```
 //!
 //! Should be adjusted to this:
-//! ```no_run
+//! ```ignore
 //! use serde::Deserialize;
 //! use gdtf::description::parse_helper::Parse;
 //!
@@ -39,7 +39,7 @@
 //! Note: support for each data-type must be opted into due to Rust rules. That can be done by
 //! implementing the [CanParse] trait for each type, in this file. For example:
 //!
-//! ```no_run
+//! ```ignore
 //! use gdtf::description::parse_helper::CanParse;
 //!
 //! impl CanParse for f64 {}

@@ -12,7 +12,7 @@
 //!
 //! # Example
 //! ```
-//! use gdtf_rs::GdtfFile;
+//! use gdtf::GdtfFile;
 //!
 //! let file = std::fs::File::open("Generic@RGBW8@test.gdtf").expect("failed to read file");
 //! let gdtf = GdtfFile::new(file).expect("failed to parse gdtf");
