@@ -208,7 +208,10 @@ trait AnyZipFile: Read {
     fn size(&self) -> u64;
 }
 
-impl<R> AnyZipFile for ZipFile<'_, R> where R: Read + ?Sized {
+impl<R> AnyZipFile for ZipFile<'_, R>
+where
+    R: Read + ?Sized,
+{
     fn name(&self) -> &str {
         self.name()
     }
