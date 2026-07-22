@@ -6,7 +6,7 @@ use crate::fixture_type::FixtureType;
 use crate::geometry::Geometry;
 use crate::physical_descriptions::{ColorSpace, DmxProfile, Emitter, Filter, Gamut};
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, DmxValue, Name, Node, NodeExt};
+use crate::values::{DmxValue, Name, Node, NodeExt, non_empty_string};
 use crate::wheel::{Wheel, WheelSlot};
 use serde::de::value::StrDeserializer;
 use serde::de::{Error, Unexpected, Visitor};
@@ -1004,17 +1004,17 @@ impl ChannelFunction {
             ));
         }
 
-        if let Some(mode_master) = &self.mode_master {
-            if mode_master.mode_master(parent_dmx_mode).is_none() {
-                result.errors.push(ValidationError::new(
-                    ValidationObject::ChannelFunction,
-                    name.map(Name::to_string),
-                    ValidationErrorType::LinkNotFound(
-                        ValidationObject::ModeMaster,
-                        mode_master.node.clone(),
-                    ),
-                ));
-            }
+        if let Some(mode_master) = &self.mode_master
+            && mode_master.mode_master(parent_dmx_mode).is_none()
+        {
+            result.errors.push(ValidationError::new(
+                ValidationObject::ChannelFunction,
+                name.map(Name::to_string),
+                ValidationErrorType::LinkNotFound(
+                    ValidationObject::ModeMaster,
+                    mode_master.node.clone(),
+                ),
+            ));
         }
 
         if let (Some(dmx_profile), None) =
@@ -1191,17 +1191,16 @@ impl ChannelSet {
         if let (Some(wheel_slot_index), Some(wheel)) = (
             self.wheel_slot_index,
             parent_channel_function.wheel(parent_fixture_type),
-        ) {
-            if self.wheel_slot(wheel).is_none() {
-                result.errors.push(ValidationError::new(
-                    ValidationObject::ChannelSet,
-                    name.map(Name::to_string),
-                    ValidationErrorType::LinkNotFound(
-                        ValidationObject::WheelSlot,
-                        Node::new([Name::new_lossy(wheel_slot_index.to_string())]),
-                    ),
-                ));
-            }
+        ) && self.wheel_slot(wheel).is_none()
+        {
+            result.errors.push(ValidationError::new(
+                ValidationObject::ChannelSet,
+                name.map(Name::to_string),
+                ValidationErrorType::LinkNotFound(
+                    ValidationObject::WheelSlot,
+                    Node::new([Name::new_lossy(wheel_slot_index.to_string())]),
+                ),
+            ));
         }
     }
 }

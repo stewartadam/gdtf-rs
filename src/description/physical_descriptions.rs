@@ -3,7 +3,7 @@
 use crate::description::parse_helper::Parse;
 use crate::description::util::IterUtil;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, ColorCie, Name};
+use crate::values::{ColorCie, Name, non_empty_string};
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
@@ -130,10 +130,10 @@ impl PhysicalDescriptions {
 
     /// Looks up a [ColorSpace] by [name](ColorSpace::name).
     pub fn color_space(&self, name: &str) -> Option<&ColorSpace> {
-        if let Some(color_space) = &self.color_space {
-            if color_space.name.as_ref().map(Name::as_ref) == Some(name) {
-                return Some(color_space);
-            }
+        if let Some(color_space) = &self.color_space
+            && color_space.name.as_ref().map(Name::as_ref) == Some(name)
+        {
+            return Some(color_space);
         }
 
         self.additional_color_spaces

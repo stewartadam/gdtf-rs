@@ -3,12 +3,12 @@
 //! Note 1: Physical or virtual wheels represent the changes to the light beam within the device.
 //! Typically color, gobo, prism, animation, content and others are described by wheels.
 
+use crate::ResourceMap;
 use crate::description::util::IterUtil;
 use crate::fixture_type::FixtureType;
 use crate::physical_descriptions::Filter;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{non_empty_string, ColorCie, Name, Node, NodeExt, Rotation};
-use crate::ResourceMap;
+use crate::values::{ColorCie, Name, Node, NodeExt, Rotation, non_empty_string};
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;

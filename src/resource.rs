@@ -1,9 +1,9 @@
 use crate::{GdtfError, GdtfResult};
 use std::fmt::{Debug, Formatter};
 use std::io::{Read, Seek};
+use zip::ZipArchive;
 use zip::read::ZipFile;
 use zip::result::{ZipError, ZipResult};
-use zip::ZipArchive;
 
 /// Provides resource files contained in a GDTF file.
 ///
@@ -32,7 +32,7 @@ impl ResourceMap {
     /// Opens a resource file contained in the GDTF file for reading.
     pub fn read_resource(&mut self, path: &str) -> GdtfResult<Resource<'_>> {
         match self.archive.by_name(path) {
-            Ok(file) => Ok(Resource::new(file)),
+            Ok(resource) => Ok(resource),
             Err(ZipError::FileNotFound) => Err(GdtfError::ResourceNotFound),
             Err(err) => Err(err.into()),
         }
@@ -141,15 +141,15 @@ impl Debug for ResourceMap {
 }
 
 pub(crate) trait AnyZipArchive: 'static {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>>;
+    fn by_name(&mut self, path: &str) -> ZipResult<Resource<'_>>;
 }
 
 impl<R> AnyZipArchive for ZipArchive<R>
 where
     R: Read + Seek + 'static,
 {
-    fn by_name(&mut self, path: &str) -> ZipResult<ZipFile<'_>> {
-        self.by_name(path)
+    fn by_name(&mut self, path: &str) -> ZipResult<Resource<'_>> {
+        self.by_name(path).map(Resource::new)
     }
 }
 
@@ -158,12 +158,17 @@ where
 /// Resources contain binary data which is exposed as a stream through the [Read] trait. How to
 /// interpret the data depends on the type of resource.
 pub struct Resource<'a> {
-    archive_file: ZipFile<'a>,
+    archive_file: Box<dyn AnyZipFile + 'a>,
 }
 
 impl<'a> Resource<'a> {
-    pub(crate) fn new(archive_file: ZipFile<'a>) -> Self {
-        Resource { archive_file }
+    pub(crate) fn new<R>(archive_file: ZipFile<'a, R>) -> Self
+    where
+        R: Read + 'a,
+    {
+        Resource {
+            archive_file: Box::new(archive_file),
+        }
     }
 
     /// Returns the size of the resource file in bytes.
@@ -195,6 +200,24 @@ impl<'a> Read for Resource<'a> {
 
     fn read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<()> {
         self.archive_file.read_exact(buf)
+    }
+}
+
+trait AnyZipFile: Read {
+    fn name(&self) -> &str;
+    fn size(&self) -> u64;
+}
+
+impl<R> AnyZipFile for ZipFile<'_, R>
+where
+    R: Read + ?Sized,
+{
+    fn name(&self) -> &str {
+        self.name()
+    }
+
+    fn size(&self) -> u64 {
+        self.size()
     }
 }
 

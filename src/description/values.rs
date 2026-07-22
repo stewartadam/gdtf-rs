@@ -93,11 +93,7 @@ impl Name {
     {
         let value = value.into();
         let is_ok = !value.contains(is_invalid_name_char);
-        if is_ok {
-            Ok(Name(value))
-        } else {
-            Err(value)
-        }
+        if is_ok { Ok(Name(value)) } else { Err(value) }
     }
 
     /// Constructs a [Name] from a string value, replacing

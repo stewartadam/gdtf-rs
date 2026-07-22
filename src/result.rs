@@ -1,4 +1,4 @@
-use quick_xml::DeError;
+use quick_xml::{DeError, SeError};
 use serde_path_to_error::Error;
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
@@ -41,6 +41,12 @@ impl From<ZipError> for GdtfError {
 
 impl From<DeError> for GdtfError {
     fn from(value: DeError) -> Self {
+        GdtfError::InvalidXml(Box::new(value))
+    }
+}
+
+impl From<SeError> for GdtfError {
+    fn from(value: SeError) -> Self {
         GdtfError::InvalidXml(Box::new(value))
     }
 }

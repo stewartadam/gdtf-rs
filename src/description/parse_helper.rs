@@ -45,8 +45,8 @@
 //! impl CanParse for f64 {}
 //! ```
 
-use serde::de::{Error, Unexpected, Visitor};
 use serde::Deserializer;
+use serde::de::{Error, Unexpected, Visitor};
 use std::fmt::Formatter;
 use std::marker::PhantomData;
 use std::str::FromStr;
