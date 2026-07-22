@@ -852,7 +852,7 @@ impl DmxValue {
             // value now = 1234000000
             // becomes     1234123412
             if !self.shifting {
-                let repeat_count = (byte_diff + my_bytes - 1) / my_bytes;
+                let repeat_count = byte_diff.div_ceil(my_bytes);
                 for repeat in 0..repeat_count {
                     let shift_bytes_inv = repeat * my_bytes;
                     let shift_bits_inv = shift_bytes_inv as u32 * 8;
