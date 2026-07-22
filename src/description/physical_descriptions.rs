@@ -130,10 +130,10 @@ impl PhysicalDescriptions {
 
     /// Looks up a [ColorSpace] by [name](ColorSpace::name).
     pub fn color_space(&self, name: &str) -> Option<&ColorSpace> {
-        if let Some(color_space) = &self.color_space {
-            if color_space.name.as_ref().map(Name::as_ref) == Some(name) {
-                return Some(color_space);
-            }
+        if let Some(color_space) = &self.color_space
+            && color_space.name.as_ref().map(Name::as_ref) == Some(name)
+        {
+            return Some(color_space);
         }
 
         self.additional_color_spaces

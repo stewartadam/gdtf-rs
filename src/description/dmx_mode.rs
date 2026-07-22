@@ -1004,17 +1004,17 @@ impl ChannelFunction {
             ));
         }
 
-        if let Some(mode_master) = &self.mode_master {
-            if mode_master.mode_master(parent_dmx_mode).is_none() {
-                result.errors.push(ValidationError::new(
-                    ValidationObject::ChannelFunction,
-                    name.map(Name::to_string),
-                    ValidationErrorType::LinkNotFound(
-                        ValidationObject::ModeMaster,
-                        mode_master.node.clone(),
-                    ),
-                ));
-            }
+        if let Some(mode_master) = &self.mode_master
+            && mode_master.mode_master(parent_dmx_mode).is_none()
+        {
+            result.errors.push(ValidationError::new(
+                ValidationObject::ChannelFunction,
+                name.map(Name::to_string),
+                ValidationErrorType::LinkNotFound(
+                    ValidationObject::ModeMaster,
+                    mode_master.node.clone(),
+                ),
+            ));
         }
 
         if let (Some(dmx_profile), None) =
@@ -1191,17 +1191,16 @@ impl ChannelSet {
         if let (Some(wheel_slot_index), Some(wheel)) = (
             self.wheel_slot_index,
             parent_channel_function.wheel(parent_fixture_type),
-        ) {
-            if self.wheel_slot(wheel).is_none() {
-                result.errors.push(ValidationError::new(
-                    ValidationObject::ChannelSet,
-                    name.map(Name::to_string),
-                    ValidationErrorType::LinkNotFound(
-                        ValidationObject::WheelSlot,
-                        Node::new([Name::new_lossy(wheel_slot_index.to_string())]),
-                    ),
-                ));
-            }
+        ) && self.wheel_slot(wheel).is_none()
+        {
+            result.errors.push(ValidationError::new(
+                ValidationObject::ChannelSet,
+                name.map(Name::to_string),
+                ValidationErrorType::LinkNotFound(
+                    ValidationObject::WheelSlot,
+                    Node::new([Name::new_lossy(wheel_slot_index.to_string())]),
+                ),
+            ));
         }
     }
 }
