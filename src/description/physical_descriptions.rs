@@ -20,8 +20,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "Emitters",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_emitters",
-        deserialize_with = "deserialize_emitters",
+        with = "serialize_emitters",
         default
     )]
     pub emitters: Vec<Emitter>,
@@ -32,8 +31,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "Filters",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_filters",
-        deserialize_with = "deserialize_filters",
+        with = "serialize_filters",
         default
     )]
     pub filters: Vec<Filter>,
@@ -50,8 +48,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "AdditionalColorSpaces",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_color_spaces",
-        deserialize_with = "deserialize_color_spaces",
+        with = "serialize_color_spaces",
         default
     )]
     pub additional_color_spaces: Vec<ColorSpace>,
@@ -62,8 +59,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "Gamuts",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_gamuts",
-        deserialize_with = "deserialize_gamuts",
+        with = "serialize_gamuts",
         default
     )]
     pub gamuts: Vec<Gamut>,
@@ -74,8 +70,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "DMXProfiles",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_dmx_profiles",
-        deserialize_with = "deserialize_dmx_profiles",
+        with = "serialize_dmx_profiles",
         default
     )]
     pub dmx_profiles: Vec<DmxProfile>,
@@ -86,8 +81,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "CRIs",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_cri_groups",
-        deserialize_with = "deserialize_cri_groups",
+        with = "serialize_cri_groups",
         default
     )]
     pub cri_groups: Vec<CriGroup>,
@@ -100,8 +94,7 @@ pub struct PhysicalDescriptions {
     #[serde(
         rename = "Connectors",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_connectors",
-        deserialize_with = "deserialize_connectors",
+        with = "serialize_connectors",
         default
     )]
     pub connectors: Vec<Connector>,
@@ -273,7 +266,7 @@ impl PhysicalDescriptions {
     }
 }
 
-define_collect_helper!("Emitter" (serialize_emitters, deserialize_emitters) -> Emitter);
+define_collect_helper!(mod serialize_emitters "Emitter" -> crate::physical_descriptions::Emitter);
 
 /// Describes an emitter on a fixture.
 ///
@@ -380,7 +373,7 @@ pub enum EmitterOptic {
     },
 }
 
-define_collect_helper!("Filter" (serialize_filters, deserialize_filters) -> Filter);
+define_collect_helper!(mod serialize_filters "Filter" -> crate::physical_descriptions::Filter);
 
 /// Describes a filter on a fixture.
 ///
@@ -534,7 +527,7 @@ pub enum Interpolation {
     Linear,
 }
 
-define_collect_helper!("ColorSpace" (serialize_color_spaces, deserialize_color_spaces) -> ColorSpace);
+define_collect_helper!(mod serialize_color_spaces "ColorSpace" -> crate::physical_descriptions::ColorSpace);
 
 /// Defines the color space that is used for color mixing.
 ///
@@ -637,7 +630,7 @@ pub enum ColorSpaceMode {
     Srgb,
 }
 
-define_collect_helper!("Gamut" (serialize_gamuts, deserialize_gamuts) -> Gamut);
+define_collect_helper!(mod serialize_gamuts "Gamut" -> crate::physical_descriptions::Gamut);
 
 /// Defines the gamut of a fixture.
 ///
@@ -682,7 +675,7 @@ impl Gamut {
     }
 }
 
-define_collect_helper!("DMXProfile" (serialize_dmx_profiles, deserialize_dmx_profiles) -> DmxProfile);
+define_collect_helper!(mod serialize_dmx_profiles "DMXProfile" -> crate::physical_descriptions::DmxProfile);
 
 /// Defines a DMX profile description.
 ///
@@ -774,7 +767,7 @@ pub struct Point {
     pub cfc3: f64,
 }
 
-define_collect_helper!("CRIGroup" (serialize_cri_groups, deserialize_cri_groups) -> CriGroup);
+define_collect_helper!(mod serialize_cri_groups "CRIGroup" -> crate::physical_descriptions::CriGroup);
 
 /// Defines the color rendering indices for a single color temperature.
 ///
@@ -912,7 +905,7 @@ fn default_color_rendering_index() -> u8 {
     100
 }
 
-define_collect_helper!("Connector" (serialize_connectors, deserialize_connectors) -> Connector);
+define_collect_helper!(mod serialize_connectors "Connector" -> crate::physical_descriptions::Connector);
 
 /// Defines physical connectors on a fixture.
 ///

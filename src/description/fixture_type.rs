@@ -13,9 +13,7 @@ use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, 
 use crate::values::{Name, non_empty_string, ok_or_default};
 use crate::wheel::Wheel;
 use crate::{FtThumbnailFormat, ResourceMap};
-use serde::de::{Error, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::Formatter;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// The starting point of a description of a fixture type.
@@ -113,8 +111,7 @@ pub struct FixtureType {
     /// Corresponds to the `CanHaveChildren` XML attribute.
     #[serde(
         rename = "@CanHaveChildren",
-        serialize_with = "serialize_fixture_type_can_have_children",
-        deserialize_with = "deserialize_fixture_type_can_have_children",
+        with = "serialize_fixture_type_can_have_children",
         default = "default_fixture_type_can_have_children"
     )]
     pub can_have_children: bool,
@@ -131,8 +128,7 @@ pub struct FixtureType {
     #[serde(
         rename = "Wheels",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_wheels",
-        deserialize_with = "deserialize_wheels",
+        with = "serialize_wheels",
         default
     )]
     pub wheels: Vec<Wheel>,
@@ -149,8 +145,7 @@ pub struct FixtureType {
     #[serde(
         rename = "Models",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_models",
-        deserialize_with = "deserialize_models",
+        with = "serialize_models",
         default
     )]
     pub models: Vec<Model>,
@@ -161,8 +156,7 @@ pub struct FixtureType {
     #[serde(
         rename = "Geometries",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_geometries",
-        deserialize_with = "deserialize_geometries"
+        with = "serialize_geometries"
     )]
     pub geometries: Vec<Geometry>,
 
@@ -172,8 +166,7 @@ pub struct FixtureType {
     #[serde(
         rename = "DMXModes",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_dmx_modes",
-        deserialize_with = "deserialize_dmx_modes"
+        with = "serialize_dmx_modes"
     )]
     pub dmx_modes: Vec<DmxMode>,
 
@@ -183,8 +176,7 @@ pub struct FixtureType {
     #[serde(
         rename = "Revisions",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_revisions",
-        deserialize_with = "deserialize_revisions",
+        with = "serialize_revisions",
         default
     )]
     pub revisions: Vec<Revision>,
@@ -195,8 +187,7 @@ pub struct FixtureType {
     #[serde(
         rename = "FTPresets",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_ft_presets",
-        deserialize_with = "deserialize_ft_presets",
+        with = "serialize_ft_presets",
         default
     )]
     pub ft_presets: Vec<FtPreset>,
@@ -385,50 +376,53 @@ fn default_fixture_type_can_have_children() -> bool {
     true
 }
 
-fn serialize_fixture_type_can_have_children<S>(
-    value: &bool,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(match value {
-        true => "Yes",
-        false => "No",
-    })
-}
+mod serialize_fixture_type_can_have_children {
+    use serde::de::{Error, Unexpected, Visitor};
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Formatter;
 
-fn deserialize_fixture_type_can_have_children<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct EnumVisitor;
-
-    impl<'de> Visitor<'de> for EnumVisitor {
-        type Value = bool;
-
-        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-            formatter.write_str("`Yes` or `No`")
-        }
-
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            match v {
-                "Yes" => Ok(true),
-                "No" => Ok(false),
-                _ => Err(E::invalid_value(Unexpected::Str(v), &self)),
-            }
-        }
+    pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(match value {
+            true => "Yes",
+            false => "No",
+        })
     }
 
-    deserializer.deserialize_str(EnumVisitor)
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct EnumVisitor;
+
+        impl<'de> Visitor<'de> for EnumVisitor {
+            type Value = bool;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("`Yes` or `No`")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                match v {
+                    "Yes" => Ok(true),
+                    "No" => Ok(false),
+                    _ => Err(E::invalid_value(Unexpected::Str(v), &self)),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(EnumVisitor)
+    }
 }
 
-define_collect_helper!("Wheel" (serialize_wheels, deserialize_wheels) -> Wheel);
-define_collect_helper!("Model" (serialize_models, deserialize_models) -> Model);
-define_collect_helper!("$value" (serialize_geometries, deserialize_geometries) -> Geometry);
-define_collect_helper!("DMXMode" (serialize_dmx_modes, deserialize_dmx_modes) -> DmxMode);
-define_collect_helper!("Revision" (serialize_revisions, deserialize_revisions) -> Revision);
-define_collect_helper!("FTPreset" (serialize_ft_presets, deserialize_ft_presets) -> FtPreset);
+define_collect_helper!(mod serialize_wheels "Wheel" -> crate::fixture_type::Wheel);
+define_collect_helper!(mod serialize_models "Model" -> crate::fixture_type::Model);
+define_collect_helper!(mod serialize_geometries "$value" -> crate::fixture_type::Geometry);
+define_collect_helper!(mod serialize_dmx_modes "DMXMode" -> crate::fixture_type::DmxMode);
+define_collect_helper!(mod serialize_revisions "Revision" -> crate::fixture_type::Revision);
+define_collect_helper!(mod serialize_ft_presets "FTPreset" -> crate::fixture_type::FtPreset);

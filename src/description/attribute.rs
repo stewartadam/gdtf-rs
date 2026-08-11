@@ -25,8 +25,7 @@ pub struct AttributeDefinitions {
     #[serde(
         rename = "ActivationGroups",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_activation_groups",
-        deserialize_with = "deserialize_activation_groups",
+        with = "serialize_activation_groups",
         default
     )]
     pub activation_groups: Vec<ActivationGroup>,
@@ -39,8 +38,7 @@ pub struct AttributeDefinitions {
     #[serde(
         rename = "FeatureGroups",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_feature_groups",
-        deserialize_with = "deserialize_feature_groups"
+        with = "serialize_feature_groups"
     )]
     pub feature_groups: Vec<FeatureGroup>,
 
@@ -50,8 +48,7 @@ pub struct AttributeDefinitions {
     #[serde(
         rename = "Attributes",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_attributes",
-        deserialize_with = "deserialize_attributes"
+        with = "serialize_attributes"
     )]
     pub attributes: Vec<Attribute>,
 }
@@ -133,7 +130,7 @@ impl AttributeDefinitions {
     }
 }
 
-define_collect_helper!("ActivationGroup" (serialize_activation_groups, deserialize_activation_groups) -> ActivationGroup);
+define_collect_helper!(mod serialize_activation_groups "ActivationGroup" -> crate::attribute::ActivationGroup);
 
 /// Defines groups of Fixture Type Attributes that are intended to be used together.
 ///
@@ -166,7 +163,7 @@ impl ActivationGroup {
     }
 }
 
-define_collect_helper!("FeatureGroup" (serialize_feature_groups, deserialize_feature_groups) -> FeatureGroup);
+define_collect_helper!(mod serialize_feature_groups "FeatureGroup" -> crate::attribute::FeatureGroup);
 
 /// Defines the logical grouping of Fixture Type Attributes.
 ///
@@ -266,7 +263,7 @@ impl Feature {
     }
 }
 
-define_collect_helper!("Attribute" (serialize_attributes, deserialize_attributes) -> Attribute);
+define_collect_helper!(mod serialize_attributes "Attribute" -> crate::attribute::Attribute);
 
 /// Defines a Fixture Type Attribute.
 ///

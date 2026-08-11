@@ -33,33 +33,40 @@
 /// }
 /// ```
 macro_rules! define_collect_helper {
-    ($tag:literal ($serialize:ident, $deserialize:ident) -> $valtype:ty) => {
-        fn $serialize<S>(value: &[$valtype], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ::serde::Serializer,
-        {
-            #[derive(::serde::Serialize)]
-            struct SeShim<'s> {
-                #[serde(rename = $tag)]
-                value: &'s [$valtype],
+    (mod $modname:ident $tag:literal -> $valtype:ty) => {
+        mod $modname {
+            pub fn serialize<S>(value: &[$valtype], serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::Serializer,
+            {
+                use serde::Serialize;
+
+                #[derive(::serde::Serialize)]
+                struct SeShim<'s> {
+                    #[serde(rename = $tag)]
+                    value: &'s [$valtype],
+                }
+                SeShim { value }.serialize(serializer)
             }
-            SeShim { value }.serialize(serializer)
-        }
-        fn $deserialize<'de, D>(deserializer: D) -> Result<Vec<$valtype>, D::Error>
-        where
-            D: ::serde::Deserializer<'de>,
-        {
-            #[derive(::serde::Deserialize)]
-            struct DeShim {
-                #[serde(rename = $tag, default)]
-                value: ::std::vec::Vec<$valtype>,
+
+            pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<$valtype>, D::Error>
+            where
+                D: ::serde::Deserializer<'de>,
+            {
+                use serde::Deserialize;
+
+                #[derive(::serde::Deserialize)]
+                struct DeShim {
+                    #[serde(rename = $tag, default)]
+                    value: ::std::vec::Vec<$valtype>,
+                }
+                ::std::vec::Vec::<DeShim>::deserialize(deserializer).map(|shim_list| {
+                    shim_list
+                        .into_iter()
+                        .flat_map(|shim| shim.value.into_iter())
+                        .collect()
+                })
             }
-            ::std::vec::Vec::<DeShim>::deserialize(deserializer).map(|shim_list| {
-                shim_list
-                    .into_iter()
-                    .flat_map(|shim| shim.value.into_iter())
-                    .collect()
-            })
         }
     };
 }

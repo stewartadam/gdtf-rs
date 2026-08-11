@@ -47,8 +47,7 @@ pub struct DmxMode {
     #[serde(
         rename = "DMXChannels",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_dmx_channels",
-        deserialize_with = "deserialize_dmx_channels"
+        with = "serialize_dmx_channels"
     )]
     pub dmx_channels: Vec<DmxChannel>,
 
@@ -58,8 +57,7 @@ pub struct DmxMode {
     #[serde(
         rename = "Relations",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_relations",
-        deserialize_with = "deserialize_relations",
+        with = "serialize_relations",
         default
     )]
     pub relations: Vec<Relation>,
@@ -70,8 +68,7 @@ pub struct DmxMode {
     #[serde(
         rename = "FTMacros",
         skip_serializing_if = "Vec::is_empty",
-        serialize_with = "serialize_ft_macros",
-        deserialize_with = "deserialize_ft_macros",
+        with = "serialize_ft_macros",
         default
     )]
     pub ft_macros: Vec<FtMacro>,
@@ -180,7 +177,7 @@ impl DmxMode {
     }
 }
 
-define_collect_helper!("DMXChannel" (serialize_dmx_channels, deserialize_dmx_channels) -> DmxChannel);
+define_collect_helper!(mod serialize_dmx_channels "DMXChannel" -> crate::dmx_mode::DmxChannel);
 
 /// Defines a DMX channel in the footprint of a device.
 ///
@@ -1323,7 +1320,7 @@ impl SubChannelSet {
     }
 }
 
-define_collect_helper!("Relation" (serialize_relations, deserialize_relations) -> Relation);
+define_collect_helper!(mod serialize_relations "Relation" -> crate::dmx_mode::Relation);
 
 /// Describes a dependency between a DMX channel and a channel function.
 ///
@@ -1425,7 +1422,7 @@ pub enum RelationType {
     Override,
 }
 
-define_collect_helper!("FTMacro" (serialize_ft_macros, deserialize_ft_macros) -> FtMacro);
+define_collect_helper!(mod serialize_ft_macros "FTMacro" -> crate::dmx_mode::FtMacro);
 
 /// Describes a macro to be executed by the control system.
 ///
