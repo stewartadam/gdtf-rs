@@ -956,8 +956,14 @@ pub struct LaserGeometry {
     /// Type of color emitted by the laser.
     ///
     /// Corresponds to the `ColorType` XML attribute.
-    #[serde(flatten, default)]
+    #[serde(rename = "@ColorType", default)]
     pub color_type: ColorType,
+
+    /// Color in nanometers.
+    ///
+    /// Corresponds to the `Color` XML attribute.
+    #[serde(rename = "@Color", skip_serializing_if = "Option::is_none", default)]
+    pub color: Option<f64>,
 
     /// Output strength of the laser in watts.
     ///
@@ -1063,16 +1069,9 @@ impl LaserGeometry {
 
 /// Type of color emitted by a laser represented by a [LaserGeometry].
 #[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
-#[serde(tag = "@ColorType")]
 pub enum ColorType {
     /// The laser geometry emits a single wavelength only.
-    SingleWaveLength(
-        /// Color in nanometers.
-        ///
-        /// Corresponds to the `Color` XML attribute.
-        #[serde(rename = "@Color", deserialize_with = "Parse::deserialize")]
-        f64,
-    ),
+    SingleWaveLength,
 
     /// The laser geometry emits an additive RGB color.
     #[default]
@@ -1780,5 +1779,37 @@ impl LaserProtocol {
                 ValidationErrorType::MissingName,
             ));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::geometry::{BeamGeometry, ColorType, LaserGeometry};
+    use crate::values::{Matrix, Name};
+
+    #[test]
+    fn parse_laser_single_wavelength() {
+        let xml = r#"<Laser BeamDiameter="0.0" BeamDivergenceMax="0.0" BeamDivergenceMin="0.0" Color="638.0" ColorType="SingleWaveLength" Name="Laser" OutputStrength="0.02" Position="{1.0,0.0,0.0,0.0}{0.0,1.0,0.0,0.0}{0.0,0.0,1.0,0.0}{0.0,0.0,0.0,1.0}" ScanAnglePan="0.0" ScanAngleTilt="0.0" ScanSpeed="0.0"/>"#;
+        let g: LaserGeometry = quick_xml::de::from_str(xml).expect("parse");
+        std::assert_matches!(
+            g.color_type,
+            ColorType::SingleWaveLength
+        );
+        std::assert_matches!(g.color, Some(638.));
+    }
+
+    #[test]
+    fn parse_laser_rgb_default() {
+        let xml = r#"<Laser BeamDiameter="0.0" BeamDivergenceMax="0.0" BeamDivergenceMin="0.0" Name="Laser" OutputStrength="0.02" Position="{1.0,0.0,0.0,0.0}{0.0,1.0,0.0,0.0}{0.0,0.0,1.0,0.0}{0.0,0.0,0.0,1.0}" ScanAnglePan="0.0" ScanAngleTilt="0.0" ScanSpeed="0.0"/>"#;
+        let g: LaserGeometry = quick_xml::de::from_str(xml).expect("parse");
+        std::assert_matches!(g.color_type, ColorType::Rgb);
+        std::assert_matches!(g.color, None);
+    }
+
+    #[test]
+    fn parse_beam_with_oversized_color_rendering_index() {
+        let xml = r#"<Beam BeamAngle="0" BeamRadius="0" BeamType="Wash" ColorRenderingIndex="6631" ColorTemperature="5600" FieldAngle="0" LampType="LED" LuminousFlux="100" Name="Beam" PowerConsumption="100" Position="{1,0,0,0}{0,1,0,0}{0,0,1,0}{0,0,0,1}"/>"#;
+        let g: BeamGeometry = quick_xml::de::from_str(xml).expect("parse");
+        assert_eq!(g.color_rendering_index, 6631);
     }
 }
