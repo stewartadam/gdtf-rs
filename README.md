@@ -36,16 +36,17 @@ cargo add gdtf
 Or add the following line to your Cargo.toml:
 
 ```toml
-gdtf = "0.2"
+gdtf = "0.3"
 ```
 
 ## Example
 
 ```rust
-use gdtf_rs::GdtfFile;
+use gdtf::GdtfFile;
 
 let file = std::fs::File::open("Generic@RGBW8@test.gdtf").expect("failed to read file");
 let gdtf = GdtfFile::new(file).expect("failed to parse gdtf");
+
 println!("GDTF file defines {} fixture types", gdtf.description.fixture_types.len());
 ```
 
