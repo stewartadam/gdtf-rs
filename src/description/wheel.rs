@@ -9,9 +9,7 @@ use crate::fixture_type::FixtureType;
 use crate::physical_descriptions::Filter;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
 use crate::values::{ColorCie, Name, Node, NodeExt, Rotation, non_empty_string};
-use serde::de::{Error, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::Formatter;
+use serde::{Deserialize, Serialize};
 
 /// Defines all physical or virtual wheels of the device.
 ///
@@ -241,31 +239,19 @@ pub struct AnimationSystem {
     /// First point of the spline as an X and Y value.
     ///
     /// Corresponds to the `P1` XML attribute.
-    #[serde(
-        rename = "@P1",
-        serialize_with = "serialize_xy_array",
-        deserialize_with = "deserialize_xy_array"
-    )]
+    #[serde(rename = "@P1", with = "serialize_xy_array")]
     pub p1: [f64; 2],
 
     /// Second point of the spline as an X and Y value.
     ///
     /// Corresponds to the `P2` XML attribute.
-    #[serde(
-        rename = "@P2",
-        serialize_with = "serialize_xy_array",
-        deserialize_with = "deserialize_xy_array"
-    )]
+    #[serde(rename = "@P2", with = "serialize_xy_array")]
     pub p2: [f64; 2],
 
     /// Third point of the spline as an X and Y value.
     ///
     /// Corresponds to the `P3` XML attribute.
-    #[serde(
-        rename = "@P3",
-        serialize_with = "serialize_xy_array",
-        deserialize_with = "deserialize_xy_array"
-    )]
+    #[serde(rename = "@P3", with = "serialize_xy_array")]
     pub p3: [f64; 2],
 
     /// Radius of the circle that defines the section of the media file which will be shown in the
@@ -276,40 +262,47 @@ pub struct AnimationSystem {
     pub radius: f64,
 }
 
-fn serialize_xy_array<S>(value: &[f64; 2], serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&format!("{},{}", value[0], value[1]))
-}
+mod serialize_xy_array {
+    use crate::wheel::take_two;
+    use serde::de::{Error, Unexpected, Visitor};
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Formatter;
 
-fn deserialize_xy_array<'de, D>(deserializer: D) -> Result<[f64; 2], D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct XyArrayVisitor;
-
-    impl<'de> Visitor<'de> for XyArrayVisitor {
-        type Value = [f64; 2];
-
-        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-            formatter.write_str("a floating point array in the format float,float")
-        }
-
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            let values = v.split(',').map(|value_str| {
-                value_str.trim().parse::<f64>().map_err(|_| {
-                    E::invalid_value(Unexpected::Str(value_str), &"a floating point number")
-                })
-            });
-            take_two(values, || E::invalid_value(Unexpected::Str(v), &self))
-        }
+    pub fn serialize<S>(value: &[f64; 2], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{},{}", value[0], value[1]))
     }
 
-    deserializer.deserialize_str(XyArrayVisitor)
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<[f64; 2], D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct XyArrayVisitor;
+
+        impl<'de> Visitor<'de> for XyArrayVisitor {
+            type Value = [f64; 2];
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("a floating point array in the format float,float")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                let values = v.split(',').map(|value_str| {
+                    value_str.trim().parse::<f64>().map_err(|_| {
+                        E::invalid_value(Unexpected::Str(value_str), &"a floating point number")
+                    })
+                });
+                take_two(values, || E::invalid_value(Unexpected::Str(v), &self))
+            }
+        }
+
+        deserializer.deserialize_str(XyArrayVisitor)
+    }
 }
 
 fn take_two<I: Iterator<Item = Result<T, E>>, T, E>(

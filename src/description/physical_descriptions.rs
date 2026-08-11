@@ -988,8 +988,7 @@ pub struct Properties {
     #[serde(
         rename = "Weight",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_value_float",
-        deserialize_with = "deserialize_value_float",
+        with = "serialize_value_float",
         default
     )]
     pub weight: Option<f64>,
@@ -1002,8 +1001,7 @@ pub struct Properties {
     #[serde(
         rename = "LegHeight",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_value_float",
-        deserialize_with = "deserialize_value_float",
+        with = "serialize_value_float",
         default
     )]
     pub leg_height: Option<f64>,
@@ -1034,26 +1032,30 @@ fn default_high_operating_temperature() -> f64 {
     40.
 }
 
-fn serialize_value_float<S>(value: &Option<f64>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    #[derive(Serialize)]
-    struct SeShim<'s> {
-        #[serde(rename = "@Value")]
-        value: &'s Option<f64>,
-    }
-    SeShim { value }.serialize(serializer)
-}
+mod serialize_value_float {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-fn deserialize_value_float<'de, D>(deserializer: D) -> Result<Option<f64>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    struct DeShim {
-        #[serde(rename = "@Value", default)]
-        value: Option<f64>,
+    pub fn serialize<S>(value: &Option<f64>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        #[derive(Serialize)]
+        struct SeShim<'s> {
+            #[serde(rename = "@Value")]
+            value: &'s Option<f64>,
+        }
+        SeShim { value }.serialize(serializer)
     }
-    DeShim::deserialize(deserializer).map(|shim| shim.value)
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<f64>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct DeShim {
+            #[serde(rename = "@Value", default)]
+            value: Option<f64>,
+        }
+        DeShim::deserialize(deserializer).map(|shim| shim.value)
+    }
 }

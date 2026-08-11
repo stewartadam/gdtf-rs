@@ -8,7 +8,6 @@ use crate::physical_descriptions::{ColorSpace, DmxProfile, Emitter, Filter, Gamu
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
 use crate::values::{DmxValue, Name, Node, NodeExt, non_empty_string};
 use crate::wheel::{Wheel, WheelSlot};
-use serde::de::value::StrDeserializer;
 use serde::de::{Error, Unexpected, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Formatter;
@@ -204,8 +203,7 @@ pub struct DmxChannel {
     #[serde(
         rename = "@Offset",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_dmx_channel_offset",
-        deserialize_with = "deserialize_dmx_channel_offset"
+        with = "serialize_dmx_channel_offset"
     )]
     pub offset: Option<Vec<i32>>,
 
@@ -223,8 +221,7 @@ pub struct DmxChannel {
     #[serde(
         rename = "@Highlight",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_dmx_channel_highlight",
-        deserialize_with = "deserialize_dmx_channel_highlight"
+        with = "serialize_dmx_channel_highlight"
     )]
     pub highlight: Option<DmxValue>,
 
@@ -430,82 +427,90 @@ impl Default for DmxBreak {
     }
 }
 
-fn serialize_dmx_channel_offset<S>(
-    value: &Option<Vec<i32>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match value {
-        None => serializer.serialize_str("None"),
-        Some(values) => serializer.serialize_str(&values.iter().join(",")),
-    }
-}
+mod serialize_dmx_channel_offset {
+    use crate::description::util::IterUtil;
+    use serde::de::{Error, Unexpected};
+    use serde::{Deserialize, Deserializer, Serializer};
 
-fn deserialize_dmx_channel_offset<'de, D>(deserializer: D) -> Result<Option<Vec<i32>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s: String = Deserialize::deserialize(deserializer)?;
-    let s = s.trim();
-    if s == "None" || s.is_empty() {
-        return Ok(None);
+    pub fn serialize<S>(value: &Option<Vec<i32>>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match value {
+            None => serializer.serialize_str("None"),
+            Some(values) => serializer.serialize_str(&values.iter().join(",")),
+        }
     }
 
-    let values: Result<Vec<_>, _> = s
-        .split(',')
-        .map(|value| {
-            value.parse::<i32>().map_err(|_| {
-                D::Error::invalid_value(
-                    Unexpected::Str(value),
-                    &"an integer between -2^31 and 2^31",
-                )
-            })
-        })
-        .collect();
-    Ok(Some(values?))
-}
-
-fn serialize_dmx_channel_highlight<S>(
-    value: &Option<DmxValue>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    match value {
-        None => serializer.serialize_str("None"),
-        Some(value) => value.serialize(serializer),
-    }
-}
-
-fn deserialize_dmx_channel_highlight<'de, D>(deserializer: D) -> Result<Option<DmxValue>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct DmxHighlightVisitor;
-
-    impl<'de> Visitor<'de> for DmxHighlightVisitor {
-        type Value = Option<DmxValue>;
-
-        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-            formatter.write_str("`None` or a DMX value in the format uint/n or uint/ns")
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<i32>>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: String = Deserialize::deserialize(deserializer)?;
+        let s = s.trim();
+        if s == "None" || s.is_empty() {
+            return Ok(None);
         }
 
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            if v == "None" {
-                Ok(None)
-            } else {
-                Ok(Some(DmxValue::deserialize(StrDeserializer::new(v))?))
+        let values: Result<Vec<_>, _> = s
+            .split(',')
+            .map(|value| {
+                value.parse::<i32>().map_err(|_| {
+                    D::Error::invalid_value(
+                        Unexpected::Str(value),
+                        &"an integer between -2^31 and 2^31",
+                    )
+                })
+            })
+            .collect();
+        Ok(Some(values?))
+    }
+}
+
+mod serialize_dmx_channel_highlight {
+    use crate::values::DmxValue;
+    use serde::de::value::StrDeserializer;
+    use serde::de::{Error, Visitor};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use std::fmt::Formatter;
+
+    pub fn serialize<S>(value: &Option<DmxValue>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match value {
+            None => serializer.serialize_str("None"),
+            Some(value) => value.serialize(serializer),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DmxValue>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DmxHighlightVisitor;
+
+        impl<'de> Visitor<'de> for DmxHighlightVisitor {
+            type Value = Option<DmxValue>;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("`None` or a DMX value in the format uint/n or uint/ns")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                if v == "None" {
+                    Ok(None)
+                } else {
+                    Ok(Some(DmxValue::deserialize(StrDeserializer::new(v))?))
+                }
             }
         }
-    }
 
-    deserializer.deserialize_str(DmxHighlightVisitor)
+        deserializer.deserialize_str(DmxHighlightVisitor)
+    }
 }
 
 /// Defines a logical, mutually exclusive part of a [DmxChannel].
@@ -536,8 +541,7 @@ pub struct LogicalChannel {
     #[serde(
         rename = "@Snap",
         skip_serializing_if = "skip_serializing_logical_channel_snap",
-        serialize_with = "serialize_logical_channel_snap",
-        deserialize_with = "deserialize_logical_channel_snap",
+        with = "serialize_logical_channel_snap",
         default
     )]
     pub snap: bool,
@@ -640,42 +644,48 @@ fn skip_serializing_logical_channel_snap(value: &bool) -> bool {
     !*value
 }
 
-fn serialize_logical_channel_snap<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(match value {
-        true => "Yes",
-        false => "No",
-    })
-}
+mod serialize_logical_channel_snap {
+    use serde::de::{Error, Unexpected, Visitor};
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Formatter;
 
-fn deserialize_logical_channel_snap<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct SnapVisitor;
-
-    impl<'de> Visitor<'de> for SnapVisitor {
-        type Value = bool;
-
-        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-            formatter.write_str("`Yes`, `No`, `On` or `Off`")
-        }
-
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            match v {
-                "Yes" | "On" => Ok(true),
-                "No" | "Off" => Ok(false),
-                _ => Err(E::invalid_value(Unexpected::Str(v), &self)),
-            }
-        }
+    pub fn serialize<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(match value {
+            true => "Yes",
+            false => "No",
+        })
     }
 
-    deserializer.deserialize_str(SnapVisitor)
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct SnapVisitor;
+
+        impl<'de> Visitor<'de> for SnapVisitor {
+            type Value = bool;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("`Yes`, `No`, `On` or `Off`")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                match v {
+                    "Yes" | "On" => Ok(true),
+                    "No" | "Off" => Ok(false),
+                    _ => Err(E::invalid_value(Unexpected::Str(v), &self)),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(SnapVisitor)
+    }
 }
 
 /// Defines if all the channel functions in a [LogicalChannel] react to a Group Control defined by
@@ -1148,8 +1158,7 @@ pub struct ChannelSet {
     #[serde(
         rename = "@WheelSlotIndex",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_wheel_slot_index",
-        deserialize_with = "deserialize_wheel_slot_index",
+        with = "serialize_wheel_slot_index",
         default
     )]
     pub wheel_slot_index: Option<i32>,
@@ -1202,23 +1211,27 @@ impl ChannelSet {
     }
 }
 
-fn serialize_wheel_slot_index<S>(value: &Option<i32>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let serialize_value = value.map_or(0, |val| val.max(0) + 1);
-    serialize_value.serialize(serializer)
-}
+mod serialize_wheel_slot_index {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-fn deserialize_wheel_slot_index<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let serialize_value = i32::deserialize(deserializer)?;
-    if serialize_value <= 0 {
-        Ok(None)
-    } else {
-        Ok(Some(serialize_value - 1))
+    pub fn serialize<S>(value: &Option<i32>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let serialize_value = value.map_or(0, |val| val.max(0) + 1);
+        serialize_value.serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let serialize_value = i32::deserialize(deserializer)?;
+        if serialize_value <= 0 {
+            Ok(None)
+        } else {
+            Ok(Some(serialize_value - 1))
+        }
     }
 }
 

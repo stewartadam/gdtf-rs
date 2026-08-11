@@ -5,9 +5,7 @@ use crate::dmx_mode::DmxMode;
 use crate::fixture_type::FixtureType;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
 use crate::values::{Name, Node};
-use serde::de::{Error, Unexpected, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::Formatter;
+use serde::{Deserialize, Serialize};
 
 /// Defines protocols supported by the device.
 ///
@@ -71,21 +69,13 @@ pub struct Rdm {
     /// Manufacturer ESTA ID.
     ///
     /// Corresponds to the `ManufacturerID` XML attribute.
-    #[serde(
-        rename = "@ManufacturerID",
-        serialize_with = "serialize_hex",
-        deserialize_with = "deserialize_hex"
-    )]
+    #[serde(rename = "@ManufacturerID", with = "serialize_hex")]
     pub manufacturer_id: u32,
 
     /// Unique device model ID.
     ///
     /// Corresponds to the `DeviceModelID` XML attribute.
-    #[serde(
-        rename = "@DeviceModelID",
-        serialize_with = "serialize_hex",
-        deserialize_with = "deserialize_hex"
-    )]
+    #[serde(rename = "@DeviceModelID", with = "serialize_hex")]
     pub device_model_id: u32,
 
     /// Describes each firmware version the device provides.
@@ -129,11 +119,7 @@ pub struct SoftwareVersion {
     /// Software version ID.
     ///
     /// Corresponds to the `Value` XML attribute.
-    #[serde(
-        rename = "@Value",
-        serialize_with = "serialize_hex",
-        deserialize_with = "deserialize_hex"
-    )]
+    #[serde(rename = "@Value", with = "serialize_hex")]
     pub value: u32,
 
     /// Personalities supported by the software version.
@@ -177,11 +163,7 @@ pub struct DmxPersonality {
     /// Hex value of the DMX personality.
     ///
     /// Corresponds to the `Value` XML attribute.
-    #[serde(
-        rename = "@Value",
-        serialize_with = "serialize_hex",
-        deserialize_with = "deserialize_hex"
-    )]
+    #[serde(rename = "@Value", with = "serialize_hex")]
     pub value: u32,
 
     /// Link to the DMX mode that can be used with this software version.
@@ -212,39 +194,46 @@ impl DmxPersonality {
     }
 }
 
-fn serialize_hex<S>(value: &u32, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&format!("{value:#x}"))
-}
+mod serialize_hex {
+    use serde::de::{Error, Unexpected, Visitor};
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Formatter;
 
-fn deserialize_hex<'de, D>(deserializer: D) -> Result<u32, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct HexVisitor;
-
-    impl<'de> Visitor<'de> for HexVisitor {
-        type Value = u32;
-
-        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-            formatter.write_str("a hexadecimal integer in the format 0xAAAA")
-        }
-
-        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
-        {
-            let Some(hex) = v.strip_prefix("0x") else {
-                return Err(E::invalid_value(Unexpected::Str(v), &self));
-            };
-
-            u32::from_str_radix(hex, 16).map_err(|_| E::invalid_value(Unexpected::Str(v), &self))
-        }
+    pub fn serialize<S>(value: &u32, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&format!("{value:#x}"))
     }
 
-    deserializer.deserialize_str(HexVisitor)
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<u32, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct HexVisitor;
+
+        impl<'de> Visitor<'de> for HexVisitor {
+            type Value = u32;
+
+            fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+                formatter.write_str("a hexadecimal integer in the format 0xAAAA")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                let Some(hex) = v.strip_prefix("0x") else {
+                    return Err(E::invalid_value(Unexpected::Str(v), &self));
+                };
+
+                u32::from_str_radix(hex, 16)
+                    .map_err(|_| E::invalid_value(Unexpected::Str(v), &self))
+            }
+        }
+
+        deserializer.deserialize_str(HexVisitor)
+    }
 }
 
 /// Defines corresponding information for devices which support Art-Net.
