@@ -574,7 +574,7 @@ pub struct BeamGeometry {
         rename = "@ColorRenderingIndex",
         default = "default_color_rendering_index"
     )]
-    pub color_rendering_index: u8,
+    pub color_rendering_index: u32,
 
     /// Optional link to an emitter defining the white light source of a subtractive color mixing
     /// system.
@@ -628,7 +628,7 @@ impl BeamGeometry {
 fn default_color_temperature() -> f64 {
     6000.
 }
-fn default_color_rendering_index() -> u8 {
+fn default_color_rendering_index() -> u32 {
     100
 }
 
