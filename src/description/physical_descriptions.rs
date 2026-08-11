@@ -648,7 +648,12 @@ pub struct Gamut {
     /// Set of points defining the vertices of the gamut's polygon.
     ///
     /// Corresponds to the `Points` XML attribute.
-    #[serde(rename = "@Points", with = "serialize_gamut_points", skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(
+        rename = "@Points",
+        with = "serialize_gamut_points",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub points: Vec<ColorCie>,
 }
 
@@ -676,13 +681,16 @@ impl Gamut {
 }
 
 mod serialize_gamut_points {
+    use crate::values::ColorCie;
+    use serde::de::{Error, Unexpected, Visitor};
+    use serde::{Deserializer, Serializer};
     use std::fmt::{Display, Formatter};
     use std::str::FromStr;
-    use serde::{Deserializer, Serializer};
-    use serde::de::{Error, Unexpected, Visitor};
-    use crate::values::ColorCie;
 
-    pub fn serialize<S>(value: &[ColorCie], serializer: S) -> Result<S::Ok, S::Error> where S: Serializer, {
+    pub fn serialize<S>(value: &[ColorCie], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         struct GamutDisplay<'a>(&'a [ColorCie]);
 
         impl<'a> Display for GamutDisplay<'a> {
@@ -697,7 +705,10 @@ mod serialize_gamut_points {
         serializer.collect_str(&GamutDisplay(value))
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<ColorCie>, D::Error> where D: Deserializer<'de> {
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<ColorCie>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         struct PointsVisitor;
 
         impl<'de> Visitor<'de> for PointsVisitor {
@@ -707,24 +718,41 @@ mod serialize_gamut_points {
                 formatter.write_str("a points string in the format {x,y,Y}{x,y,Y}...")
             }
 
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: Error, {
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
                 let mut v = v.trim();
                 let mut points = Vec::new();
 
                 while !v.is_empty() {
-                    let a = v.strip_prefix('{').ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
+                    let a = v
+                        .strip_prefix('{')
+                        .ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
 
-                    let (x, a) = a.split_once(',').ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
-                    let (y, a) = a.split_once(',').ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
-                    let (z, a) = a.split_once('}').ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
+                    let (x, a) = a
+                        .split_once(',')
+                        .ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
+                    let (y, a) = a
+                        .split_once(',')
+                        .ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
+                    let (z, a) = a
+                        .split_once('}')
+                        .ok_or_else(|| E::invalid_value(Unexpected::Str(v), &self))?;
 
                     let x = x.trim();
                     let y = y.trim();
                     let z = z.trim();
 
-                    let x = f64::from_str(x).map_err(|_| E::invalid_value(Unexpected::Str(x), &"a floating point number"))?;
-                    let y = f64::from_str(y).map_err(|_| E::invalid_value(Unexpected::Str(y), &"a floating point number"))?;
-                    let z = f64::from_str(z).map_err(|_| E::invalid_value(Unexpected::Str(z), &"a floating point number"))?;
+                    let x = f64::from_str(x).map_err(|_| {
+                        E::invalid_value(Unexpected::Str(x), &"a floating point number")
+                    })?;
+                    let y = f64::from_str(y).map_err(|_| {
+                        E::invalid_value(Unexpected::Str(y), &"a floating point number")
+                    })?;
+                    let z = f64::from_str(z).map_err(|_| {
+                        E::invalid_value(Unexpected::Str(z), &"a floating point number")
+                    })?;
 
                     points.push(ColorCie { x, y, z });
 
@@ -1133,11 +1161,26 @@ mod tests {
     fn parse_three_point_gamut() {
         let xml = r#"<Gamut Name="Test" Points=" { 0.640000 , 0.330000 , 21.262754 } { 0.300000 , 0.600000 , 71.516600 } { 0.150000 , 0.060000 , 7.224500 } "/>"#;
         let g: Gamut = quick_xml::de::from_str(xml).expect("parse");
-        assert_eq!(g.points, &[
-            ColorCie { x: 0.64, y: 0.33, z: 21.262754 },
-            ColorCie { x: 0.30, y: 0.60, z: 71.516600 },
-            ColorCie { x: 0.15, y: 0.06, z: 7.224500 },
-        ]);
+        assert_eq!(
+            g.points,
+            &[
+                ColorCie {
+                    x: 0.64,
+                    y: 0.33,
+                    z: 21.262754
+                },
+                ColorCie {
+                    x: 0.30,
+                    y: 0.60,
+                    z: 71.516600
+                },
+                ColorCie {
+                    x: 0.15,
+                    y: 0.06,
+                    z: 7.224500
+                },
+            ]
+        );
     }
 
     #[test]

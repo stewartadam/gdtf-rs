@@ -1791,10 +1791,7 @@ mod tests {
     fn parse_laser_single_wavelength() {
         let xml = r#"<Laser BeamDiameter="0.0" BeamDivergenceMax="0.0" BeamDivergenceMin="0.0" Color="638.0" ColorType="SingleWaveLength" Name="Laser" OutputStrength="0.02" Position="{1.0,0.0,0.0,0.0}{0.0,1.0,0.0,0.0}{0.0,0.0,1.0,0.0}{0.0,0.0,0.0,1.0}" ScanAnglePan="0.0" ScanAngleTilt="0.0" ScanSpeed="0.0"/>"#;
         let g: LaserGeometry = quick_xml::de::from_str(xml).expect("parse");
-        std::assert_matches!(
-            g.color_type,
-            ColorType::SingleWaveLength
-        );
+        std::assert_matches!(g.color_type, ColorType::SingleWaveLength);
         std::assert_matches!(g.color, Some(638.));
     }
 
