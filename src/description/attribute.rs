@@ -307,7 +307,7 @@ pub struct Attribute {
     /// See the [Attribute::feature] method to look up the linked feature.
     ///
     /// Corresponds to the `Feature` XML attribute.
-    #[serde(rename = "@Feature")]
+    #[serde(rename = "@Feature", skip_serializing_if = "Option::is_none")]
     pub feature: Option<Node>,
 
     /// Optional link to the main [Attribute].

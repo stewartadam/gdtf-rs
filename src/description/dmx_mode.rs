@@ -37,7 +37,7 @@ pub struct DmxMode {
     /// Only top level geometries are allowed to be linked.
     ///
     /// Corresponds to the `Geometry` XML attribute.
-    #[serde(rename = "@Geometry")]
+    #[serde(rename = "@Geometry", skip_serializing_if = "Option::is_none")]
     pub geometry: Option<Name>,
 
     /// Description of all DMX channels used in this mode.

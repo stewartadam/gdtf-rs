@@ -35,4 +35,7 @@ fn omitted_optional_fields_parse() {
     let channel = &description.fixture_types[0].dmx_modes[0].dmx_channels[0];
     assert_eq!(channel.offset, None);
     assert_eq!(channel.highlight, None);
+
+    let reparsed = Description::from_str(&description.to_string().unwrap()).unwrap();
+    assert_eq!(reparsed, description);
 }
