@@ -10,7 +10,7 @@ use crate::physical_descriptions::PhysicalDescriptions;
 use crate::protocol::Protocols;
 use crate::revision::Revision;
 use crate::validation::{ValidationError, ValidationErrorType, ValidationObject, ValidationResult};
-use crate::values::{Name, non_empty_string, ok_or_default};
+use crate::values::{Name, non_empty_string, non_empty_uuid, ok_or_default};
 use crate::wheel::Wheel;
 use crate::{FtThumbnailFormat, ResourceMap};
 use serde::{Deserialize, Serialize};
@@ -59,6 +59,17 @@ pub struct FixtureType {
     /// Corresponds to the `FixtureTypeID` XML attribute.
     #[serde(rename = "@FixtureTypeID")]
     pub fixture_type_id: Uuid,
+
+    /// Fixture type this fixture type references, such as the one it was derived from.
+    ///
+    /// Corresponds to the `RefFT` XML attribute.
+    #[serde(
+        rename = "@RefFT",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "non_empty_uuid",
+        default
+    )]
+    pub ref_ft: Option<Uuid>,
 
     /// File name without extension containing description of the thumbnail.
     ///
