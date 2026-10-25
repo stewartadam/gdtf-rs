@@ -155,6 +155,7 @@ pub struct FixtureType {
     /// Corresponds to the `<Geometries>` XML child node.
     #[serde(
         rename = "Geometries",
+        default,
         skip_serializing_if = "Vec::is_empty",
         with = "serialize_geometries"
     )]
@@ -165,6 +166,7 @@ pub struct FixtureType {
     /// Corresponds to the `<DMXModes>` XML child node.
     #[serde(
         rename = "DMXModes",
+        default,
         skip_serializing_if = "Vec::is_empty",
         with = "serialize_dmx_modes"
     )]
