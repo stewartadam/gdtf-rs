@@ -39,3 +39,25 @@ fn omitted_optional_fields_parse() {
     let reparsed = Description::from_str(&description.to_string().unwrap()).unwrap();
     assert_eq!(reparsed, description);
 }
+
+/// Checks that a fixture type's RefFT reference is read and written back.
+#[test]
+fn ref_ft_round_trips() {
+    let xml = r#"<GDTF DataVersion="1.2">
+  <FixtureType Name="Test" ShortName="T" LongName="Test" Manufacturer="Generic" Description="" FixtureTypeID="00000000-0000-0000-0000-000000000000" RefFT="11111111-2222-3333-4444-555555555555" Thumbnail="">
+    <AttributeDefinitions/>
+    <Wheels/>
+    <PhysicalDescriptions/>
+    <Models/>
+    <Geometries/>
+    <DMXModes/>
+  </FixtureType>
+</GDTF>"#;
+    let description = Description::from_str(xml).unwrap();
+    assert_eq!(
+        description.fixture_types[0].ref_ft.unwrap().to_string(),
+        "11111111-2222-3333-4444-555555555555"
+    );
+    let reparsed = Description::from_str(&description.to_string().unwrap()).unwrap();
+    assert_eq!(reparsed, description);
+}
