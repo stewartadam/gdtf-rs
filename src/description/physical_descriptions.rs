@@ -357,6 +357,7 @@ pub enum EmitterOptic {
         /// Corresponds to the `DominantWaveLength` XML attribute.
         #[serde(
             rename = "@DominantWaveLength",
+            default,
             skip_serializing_if = "Option::is_none",
             deserialize_with = "Parse::deserialize"
         )]
