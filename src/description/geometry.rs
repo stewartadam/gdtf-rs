@@ -846,7 +846,7 @@ pub struct ReferenceGeometry {
     /// Only top level geometries can be referenced.
     ///
     /// Corresponds to the `Geometry` XML attribute.
-    #[serde(rename = "@Geometry")]
+    #[serde(rename = "@Geometry", skip_serializing_if = "Option::is_none")]
     pub geometry: Option<Name>,
 
     /// Specifies DMX offsets for the DMX channels of the referenced geometry.

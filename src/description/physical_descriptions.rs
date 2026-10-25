@@ -39,7 +39,7 @@ pub struct PhysicalDescriptions {
     /// Describes device default color space.
     ///
     /// Corresponds to the `<ColorSpace>` XML child node.
-    #[serde(rename = "ColorSpace")]
+    #[serde(rename = "ColorSpace", skip_serializing_if = "Option::is_none")]
     pub color_space: Option<ColorSpace>,
 
     /// Describes additional device color spaces.
