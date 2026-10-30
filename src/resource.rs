@@ -1,4 +1,5 @@
 use crate::{GdtfError, GdtfResult};
+use std::borrow::Cow;
 use std::fmt::{Debug, Formatter};
 use std::io::{Read, Seek};
 use zip::ZipArchive;
@@ -204,7 +205,7 @@ impl<'a> Read for Resource<'a> {
 }
 
 trait AnyZipFile: Read {
-    fn name(&self) -> &str;
+    fn name(&self) -> Cow<'_, str>;
     fn size(&self) -> u64;
 }
 
@@ -212,8 +213,8 @@ impl<R> AnyZipFile for ZipFile<'_, R>
 where
     R: Read + ?Sized,
 {
-    fn name(&self) -> &str {
-        self.name()
+    fn name(&self) -> Cow<'_, str> {
+        ZipFile::name(self).unwrap_or_else(|_| String::from_utf8_lossy(self.name_raw()))
     }
 
     fn size(&self) -> u64 {
